@@ -1,12 +1,18 @@
 ---
 - hosts: localhost
   tasks:
-    - name: Install packages
+    - name: Ensure apt update
+      apt: update_cache=yes cache_valid_time=3600
+
+    - name: Ensure installed packages
       apt: name="{{ item }}" state=present
       with_items:
         - vim
+        - emacs24
         - curl
         - git
+        - tree
+        - silversearcher-ag
         - python-pip
         - python-dev
         - openssh-server
@@ -14,3 +20,61 @@
         - dmenu
         - man-db
         - aspell
+        - gcc
+        - make
+        - pkg-config
+        - libx11-dev
+        - libxtst-dev
+        - libxi-dev
+
+    - name: Add i3wm repository
+      apt_repository: repo='deb http://debian.sur5r.net/i3/ {{ ansible_lsb.codename }} universe' state=present 
+
+    - name: Ensure apt update
+      apt: update_cache=yes cache_valid_time=3600
+
+    - name: Ensure sur5r-keyring installed
+      apt: name=sur5r-keyring state=present force=yes
+
+    - name: Ensure apt update
+      apt: update_cache=yes cache_valid_time=3600
+
+    - name: Ensure i3 installed
+      apt: name=i3 state=present
+
+    - name: Ensure xcape repository cloned
+      git: repo=https://github.com/alols/xcape.git dest=/tmp/xcape
+
+    - name: Ensure xcape maked
+      command: make chdir=/tmp/xcape creates=xcape
+    - name: Ensure xcape is in the path
+      file: src=/tmp/xcape/xcape
+            dest=/usr/local/bin/xcape
+            state=link
+            owner=root
+            group=root
+
+    - name: Ensure ssh iptables rule
+      lineinfile: dest=/etc/rc.local
+                  line="/sbin/iptables -I INPUT -p tcp --dport 22 -j ACCEPT"
+
+    - name: Ensure ssh run directory exists
+      lineinfile: dest=/etc/rc.local
+                  line="mkdir -p -m0755 /var/run/sshd"
+
+    - name: Ensure sshd starts
+      lineinfile: dest=/etc/rc.local
+                  line="/usr/sbin/sshd"
+
+    - name: Ensure chromebook keyboard set
+      lineinfile: dest=/etc/default/keyboard
+                  line='XKBMODEL="chromebook"'
+                  regexp='^XKBMODEL'
+
+    - name: Ensure XFCE autostart entries
+      file: src="files/{{ item }}"
+            dest="/home/ryan/.config/autostart/{{ item }}"
+            owner=ryan group=ryan
+      with_items:
+        - "i3.desktop"
+        - "Sane Keybindings.desktop"
