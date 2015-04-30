@@ -40,7 +40,7 @@
       apt: update_cache=yes cache_valid_time=3600
 
     - name: Ensure i3 installed
-      apt: name=i3 state=present
+      apt: name=i3 state=present force=yes
 
     - name: Ensure xcape repository cloned
       git: repo=https://github.com/alols/xcape.git dest=/tmp/xcape
@@ -72,9 +72,17 @@
                   regexp='^XKBMODEL'
 
     - name: Ensure XFCE autostart entries
-      file: src="files/{{ item }}"
+      copy: src="./files/{{ item }}"
             dest="/home/ryan/.config/autostart/{{ item }}"
             owner=ryan group=ryan
       with_items:
         - "i3.desktop"
         - "Sane Keybindings.desktop"
+
+    - name: Ensure spacemacs is installed
+      git: repo=https://github.com/syl20bnr/spacemacs.git
+           dest=/home/ryan/.emacs.d
+           accept_hostkey=yes
+
+    - name: Ensure permissions on .emacs.d
+      file: path=/home/ryan/.emacs.d owner=ryan group=ryan recurse=yes
