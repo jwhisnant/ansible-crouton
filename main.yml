@@ -71,6 +71,10 @@
                   line='XKBMODEL="chromebook"'
                   regexp='^XKBMODEL'
 
+    - name: Ensure config autostart directory exists
+      file: path="/home/ryan/.config/autostart" state=directory
+            owner=ryan group=ryan
+
     - name: Ensure XFCE autostart entries
       copy: src="./files/{{ item }}"
             dest="/home/ryan/.config/autostart/{{ item }}"
