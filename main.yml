@@ -50,6 +50,8 @@
         - libxi-dev
         - evince
         - tmux
+        - nodejs
+        - npm
       tags:
         - packages
 
