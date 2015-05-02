@@ -1,6 +1,21 @@
 ---
 - hosts: localhost
+  vars:
+    hostname: crouton
   tasks:
+    - name: Ensure hostname is set
+      hostname: name="{{ hostname }}"
+
+    - name: Ensure hosts file reflects host name
+      lineinfile: dest=/etc/hosts
+                  regexp='^127\.0\.0\.1'
+                  line='127.0.0.1 localhost {{ hostname }}'
+                  state=present
+                  owner=root
+                  group=root
+                  mode=0644
+                  backup=yes
+
     - name: Ensure apt update
       apt: update_cache=yes cache_valid_time=3600
 
