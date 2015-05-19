@@ -52,6 +52,8 @@
         - tmux
         - nodejs
         - npm
+        - mutt
+        - w3m
       tags:
         - packages
 
