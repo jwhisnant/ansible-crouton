@@ -1,12 +1,8 @@
 ---
 - hosts: localhost
   vars:
-    hostname: crouton
-  roles:
-    - role: ansible-go
-      go_tarball: "go1.4.2.linux-amd64.tar.gz"
-      go_tarball_checksum: "141b8345932641483c2437bdbd65488a269282ac85f91170805c273f03dd223b"
-      go_version_target: "go version go1.4.2 linux/amd64"
+    hostname: wily
+    owner: jwhisnant
   tasks:
     - name: Ensure hostname is set
       hostname: name="{{ hostname }}"
@@ -29,54 +25,41 @@
     - name: Ensure installed packages
       apt: name="{{ item }}" state=present
       with_items:
-        - vim
-        - emacs24
-        - curl
-        - git
-        - tree
-        - silversearcher-ag
-        - python-pip
-        - python-dev
-        - openssh-server
-        - iptables
-        - dmenu
-        - man-db
         - aspell
+        - bitlbee
+        - byobu
+        - curl
+        - dmenu
         - gcc
-        - make
-        - pkg-config
+        - git
+        - iptables
+        - irssi
         - libx11-dev
-        - libxtst-dev
         - libxi-dev
-        - evince
-        - tmux
-        - nodejs
-        - npm
+        - libxtst-dev
+        - make
+        - man-db
         - mutt
-        - w3m
+        - openssh-server
+        - pkg-config
+        - python-dev
+        - python-pip
+        - silversearcher-ag
+        - tree
+        - vim
+        - wget
       tags:
         - packages
 
-    - name: Add i3wm repository
-      apt_repository: repo='deb http://debian.sur5r.net/i3/ {{ ansible_lsb.codename }} universe' state=present 
-
     - name: Ensure apt update
       apt: update_cache=yes cache_valid_time=3600
-
-    - name: Ensure sur5r-keyring installed
-      apt: name=sur5r-keyring state=present force=yes
-
-    - name: Ensure apt update
-      apt: update_cache=yes cache_valid_time=3600
-
-    - name: Ensure i3 installed
-      apt: name=i3 state=present force=yes
 
     - name: Ensure xcape repository cloned
       git: repo=https://github.com/alols/xcape.git dest=/tmp/xcape
 
     - name: Ensure xcape maked
       command: make chdir=/tmp/xcape creates=xcape
+
     - name: Ensure xcape is in the path
       file: src=/tmp/xcape/xcape
             dest=/usr/local/bin/xcape
@@ -88,6 +71,7 @@
       lineinfile: dest=/etc/rc.local
                   line="/sbin/iptables -I INPUT -p tcp --dport 22 -j ACCEPT"
 
+    #ssh
     - name: Ensure ssh run directory exists
       lineinfile: dest=/etc/rc.local
                   line="mkdir -p -m0755 /var/run/sshd"
@@ -95,28 +79,62 @@
     - name: Ensure sshd starts
       lineinfile: dest=/etc/rc.local
                   line="/usr/sbin/sshd"
+         
+    #screen and byobu
+    - name: Ensure screen run directory exists
+      lineinfile: dest=/etc/rc.local
+                  line="mkdir -p -m0775 /var/run/screen"
 
+    - name: Ensure /var/run/screen permissions
+      lineinfile: dest=/etc/rc.local
+                  line="chown root:utmp /var/run/screen"
+
+    #utmp
+    - name: Ensure /var/run/utmp permission
+      lineinfile: dest=/etc/rc.local
+                  line="touch /var/run/utmp"
+
+    - name: Ensure /var/run/utmp permissions
+      lineinfile: dest=/etc/rc.local
+                  line="chmod 0664 /var/run/utmp"
+
+    - name: Ensure /var/run/utmp ownership
+      lineinfile: dest=/etc/rc.local
+                  line="chown root:utmp /var/run/utmp"
+
+         
+    #neo4j
+    - name: Try to start neo4j (if installed)
+      lineinfile: dest=/etc/rc.local
+        line="service neo4j-service start"
+
+    #bitlebee auto-start
+    - name: Try to start bitlbee
+      lineinfile: dest=/etc/rc.local
+        line="/etc/init.d/bitlbee start"
+        
     - name: Ensure chromebook keyboard set
       lineinfile: dest=/etc/default/keyboard
                   line='XKBMODEL="chromebook"'
                   regexp='^XKBMODEL'
 
     - name: Ensure config autostart directory exists
-      file: path="/home/ryan/.config/autostart" state=directory
-            owner=ryan group=ryan
+      file: path="/home/{{owner}}/.config/autostart" state=directory
+            owner={{owner}} group= {{owner}}
 
-    - name: Ensure XFCE autostart entries
-      copy: src="./files/{{ item }}"
-            dest="/home/ryan/.config/autostart/{{ item }}"
-            owner=ryan group=ryan
-      with_items:
-        - "i3.desktop"
-        - "Sane Keybindings.desktop"
+    #- name: Ensure XFCE autostart entries
+      #copy: src="./files/{{ item }}"
+            #dest="/home/{{owner}}/.config/autostart/{{ item }}"
+            #owner={{owner}} group={{owner}}
+      #with_items:
+        #- "i3.desktop"
+        #- "Sane Keybindings.desktop"
 
-    - name: Ensure spacemacs is installed
-      git: repo=https://github.com/syl20bnr/spacemacs.git
-           dest=/home/ryan/.emacs.d
-           accept_hostkey=yes
+    #- name: Ensure spacemacs is installed
+      #git: repo=https://github.com/syl20bnr/spacemacs.git
+           #dest=/home/{{owner}}/.emacs.d
+           #accept_hostkey=yes
 
-    - name: Ensure permissions on .emacs.d
-      file: path=/home/ryan/.emacs.d owner=ryan group=ryan recurse=yes
+    #- name: Ensure permissions on .emacs.d
+      #file: path=/home/{{owner}}/.emacs.d owner={{owner}} group={{owner}} recurse=yes
+...
