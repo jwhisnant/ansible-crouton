@@ -1,0 +1,24 @@
+---
+- hosts: localhost
+  vars:
+    owner: jwhisnant
+  tasks:
+        
+    #neo4j
+    - name: Try to start neo4j (if installed)
+      lineinfile: dest=/etc/rc.local
+        line="service neo4j-service start"
+
+    #- name: Ensure ssh iptables rule
+      #lineinfile: dest=/etc/rc.local
+        #line="/sbin/iptables -I INPUT -p tcp --dport 7474 -j ACCEPT"
+
+    - name: Ensure neo4j file limits
+      become: yes
+      become_user: root
+      blockinfile:
+        dest: /etc/security/limits.conf
+        block: |
+            # neo4j file limit settings
+            root   soft    nofile  40000
+            root   hard    nofile  40000

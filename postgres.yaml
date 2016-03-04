@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  become: yes
+  #become_method: sudo
+
+  vars:
+    owner: jwhisnant
+
+  tasks:
+
+    - name: Try to start postgres (if installed)
+      lineinfile: dest=/etc/rc.local
+                  line="service postgresql start"
+
+    - name: Ensure ssh iptables rule
+      become: yes
+      become_user: root
+      lineinfile: dest=/etc/rc.local
+                  line="/sbin/iptables -I INPUT -p tcp --dport 5432 -j ACCEPT"
+

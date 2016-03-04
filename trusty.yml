@@ -1,0 +1,79 @@
+---
+- hosts: localhost
+  become: yes
+  vars:
+    owner: jwhisnant
+
+  tasks:
+
+
+    - name: Ensure xcape repository cloned
+      git: repo=https://github.com/alols/xcape.git dest=/tmp/xcape
+
+    - name: Ensure xcape maked
+      command: make chdir=/tmp/xcape creates=xcape
+
+    - name: Ensure xcape is in the path
+      file: src=/tmp/xcape/xcape
+            dest=/usr/local/bin/xcape
+            state=link
+            owner=root
+            group=root
+
+    - name: Ensure ssh iptables rule
+      lineinfile: dest=/etc/rc.local
+                  line="/sbin/iptables -I INPUT -p tcp --dport 22 -j ACCEPT"
+
+    - name: remove exit 0
+      lineinfile: dest=/etc/rc.local
+                  line="exit 0"
+                  state=absent
+
+
+    #ssh
+    - name: Ensure ssh run directory exists
+      lineinfile: dest=/etc/rc.local
+                  line="mkdir -p -m0755 /var/run/sshd"
+
+    - name: Ensure sshd starts
+      lineinfile: dest=/etc/rc.local
+                  line="/usr/sbin/sshd"
+         
+    #screen and byobu
+    - name: Ensure screen run directory exists
+      lineinfile: dest=/etc/rc.local
+                  line="mkdir -p -m0775 /var/run/screen"
+
+    - name: Ensure /var/run/screen permissions
+      lineinfile: dest=/etc/rc.local
+                  line="chown root:utmp /var/run/screen"
+
+    #utmp
+    - name: Ensure /var/run/utmp permission
+      lineinfile: dest=/etc/rc.local
+                  line="touch /var/run/utmp"
+
+    - name: Ensure /var/run/utmp permissions
+      lineinfile: dest=/etc/rc.local
+                  line="chmod 0664 /var/run/utmp"
+
+    - name: Ensure /var/run/utmp ownership
+      lineinfile: dest=/etc/rc.local
+                  line="chown root:utmp /var/run/utmp"
+
+         
+    #bitlebee auto-start
+    - name: Try to start bitlbee
+      lineinfile: dest=/etc/rc.local
+        line="/etc/init.d/bitlbee start"
+        
+    - name: Ensure chromebook keyboard set
+      lineinfile: dest=/etc/default/keyboard
+                  line='XKBMODEL="chromebook"'
+                  regexp='^XKBMODEL'
+
+    #autostart (why is this here?)
+    - name: Ensure config autostart directory exists
+      file: path="/home/{{owner}}/.config/autostart" state=directory
+            owner={{owner}} group= {{owner}}
+
